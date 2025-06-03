@@ -17,14 +17,14 @@ from django.db.models.fields.json import KeyTransform
 from django.db.models.functions import Cast, Concat, LPad, Substr
 from django.test.utils import Approximate
 from django.utils import timezone
-from django.utils.deprecation import RemovedInDjango61Warning, RemovedInDjango70Warning
+from django.utils.deprecation import RemovedInDjango62Warning, RemovedInDjango71Warning
 
 from . import PostgreSQLTestCase
 from .models import AggregateTestModel, HotelReservation, Room, StatTestModel
 
 try:
     from django.contrib.postgres.aggregates import (
-        StringAgg,  # RemovedInDjango70Warning.
+        StringAgg,  # RemovedInDjango71Warning.
     )
     from django.contrib.postgres.aggregates import (
         ArrayAgg,
@@ -149,14 +149,14 @@ class TestGeneralAggregate(PostgreSQLTestCase):
 
     def test_ordering_warns_of_deprecation(self):
         msg = "The ordering argument is deprecated. Use order_by instead."
-        with self.assertWarnsMessage(RemovedInDjango61Warning, msg) as ctx:
+        with self.assertWarnsMessage(RemovedInDjango62Warning, msg) as ctx:
             values = AggregateTestModel.objects.aggregate(
                 arrayagg=ArrayAgg("integer_field", ordering=F("integer_field").desc())
             )
             self.assertEqual(values, {"arrayagg": [2, 1, 0, 0]})
         self.assertEqual(ctx.filename, __file__)
 
-    # RemovedInDjango61Warning: Remove this test
+    # RemovedInDjango62Warning: Remove this test
     def test_ordering_and_order_by_causes_error(self):
         with warnings.catch_warnings(record=True, action="always") as wm:
             with self.assertRaisesMessage(
@@ -173,7 +173,7 @@ class TestGeneralAggregate(PostgreSQLTestCase):
                 )
 
         first_warning = wm[0]
-        self.assertEqual(first_warning.category, RemovedInDjango70Warning)
+        self.assertEqual(first_warning.category, RemovedInDjango71Warning)
         self.assertEqual(
             "The PostgreSQL specific StringAgg function is deprecated. Use "
             "django.db.models.aggregate.StringAgg instead.",
@@ -181,7 +181,7 @@ class TestGeneralAggregate(PostgreSQLTestCase):
         )
 
         second_warning = wm[1]
-        self.assertEqual(second_warning.category, RemovedInDjango61Warning)
+        self.assertEqual(second_warning.category, RemovedInDjango62Warning)
         self.assertEqual(
             "The ordering argument is deprecated. Use order_by instead.",
             str(second_warning.message),
@@ -669,11 +669,11 @@ class TestGeneralAggregate(PostgreSQLTestCase):
     def test_string_agg_delimiter_deprecation(self):
         msg = (
             "delimiter: str will be resolved as a field reference instead "
-            'of a string literal on Django 7.0. Pass `delimiter=Value("\'")` to '
+            'of a string literal on Django 7.1. Pass `delimiter=Value("\'")` to '
             "preserve the previous behavior."
         )
 
-        with self.assertWarnsMessage(RemovedInDjango70Warning, msg) as ctx:
+        with self.assertWarnsMessage(RemovedInDjango71Warning, msg) as ctx:
             values = AggregateTestModel.objects.aggregate(
                 stringagg=StringAgg("char_field", delimiter="'")
             )
@@ -686,7 +686,7 @@ class TestGeneralAggregate(PostgreSQLTestCase):
             "django.db.models.aggregate.StringAgg instead."
         )
 
-        with self.assertWarnsMessage(RemovedInDjango70Warning, msg) as ctx:
+        with self.assertWarnsMessage(RemovedInDjango71Warning, msg) as ctx:
             values = AggregateTestModel.objects.aggregate(
                 stringagg=StringAgg("char_field", delimiter=Value("'"))
             )

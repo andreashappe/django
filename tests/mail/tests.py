@@ -37,7 +37,7 @@ from django.core.mail.backends import console, dummy, filebased, locmem, smtp
 from django.core.mail.message import sanitize_address
 from django.test import SimpleTestCase, override_settings
 from django.test.utils import requires_tz_support
-from django.utils.deprecation import RemovedInDjango70Warning
+from django.utils.deprecation import RemovedInDjango71Warning
 from django.utils.translation import gettext_lazy
 
 try:
@@ -1882,7 +1882,7 @@ class BaseEmailBackendTests(MailTestsMixin):
                 mail_func("hi", "there")
                 self.assertEqual(self.get_mailbox_content(), [])
 
-    # RemovedInDjango70Warning.
+    # RemovedInDjango71Warning.
     def test_deprecated_admins_managers_tuples(self):
         tests = (
             [("nobody", "nobody@example.com"), ("other", "other@example.com")],
@@ -1902,7 +1902,7 @@ class BaseEmailBackendTests(MailTestsMixin):
                     self.subTest(setting=setting, value=value),
                     self.settings(**{setting: value}),
                 ):
-                    with self.assertWarnsMessage(RemovedInDjango70Warning, msg):
+                    with self.assertWarnsMessage(RemovedInDjango71Warning, msg):
                         mail_func("subject", "content")
                     message = self.get_the_message()
                     expected_to = ", ".join([str(address) for _, address in value])
@@ -1912,7 +1912,7 @@ class BaseEmailBackendTests(MailTestsMixin):
         tests = (
             "test@example.com",
             gettext_lazy("test@example.com"),
-            # RemovedInDjango70Warning: uncomment these cases when support for
+            # RemovedInDjango71Warning: uncomment these cases when support for
             # deprecated (name, address) tuples is removed.
             #    [("nobody", "nobody@example.com"), ("other", "other@example.com")],
             #    [["nobody", "nobody@example.com"], ["other", "other@example.com"]],

@@ -4,7 +4,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.db.models import Aggregate, BooleanField, JSONField
 from django.db.models import StringAgg as _StringAgg
 from django.db.models import Value
-from django.utils.deprecation import RemovedInDjango70Warning
+from django.utils.deprecation import RemovedInDjango71Warning
 
 from .mixins import _DeprecatedOrdering
 
@@ -16,11 +16,11 @@ __all__ = [
     "BoolAnd",
     "BoolOr",
     "JSONBAgg",
-    "StringAgg",  # RemovedInDjango70Warning.
+    "StringAgg",  # RemovedInDjango71Warning.
 ]
 
 
-# RemovedInDjango61Warning: When the deprecation ends, replace with:
+# RemovedInDjango62Warning: When the deprecation ends, replace with:
 # class ArrayAgg(Aggregate):
 class ArrayAgg(_DeprecatedOrdering, Aggregate):
     function = "ARRAY_AGG"
@@ -54,7 +54,7 @@ class BoolOr(Aggregate):
     output_field = BooleanField()
 
 
-# RemovedInDjango61Warning: When the deprecation ends, replace with:
+# RemovedInDjango62Warning: When the deprecation ends, replace with:
 # class JSONBAgg(Aggregate):
 class JSONBAgg(_DeprecatedOrdering, Aggregate):
     function = "JSONB_AGG"
@@ -63,18 +63,18 @@ class JSONBAgg(_DeprecatedOrdering, Aggregate):
     output_field = JSONField()
 
 
-# RemovedInDjango61Warning: When the deprecation ends, replace with:
+# RemovedInDjango62Warning: When the deprecation ends, replace with:
 # class StringAgg(_StringAgg):
-# RemovedInDjango70Warning: When the deprecation ends, remove completely.
+# RemovedInDjango71Warning: When the deprecation ends, remove completely.
 class StringAgg(_DeprecatedOrdering, _StringAgg):
 
     def __init__(self, expression, delimiter, **extra):
         if isinstance(delimiter, str):
             warnings.warn(
                 "delimiter: str will be resolved as a field reference instead "
-                "of a string literal on Django 7.0. Pass "
+                "of a string literal on Django 7.1. Pass "
                 f"`delimiter=Value({delimiter!r})` to preserve the previous behavior.",
-                category=RemovedInDjango70Warning,
+                category=RemovedInDjango71Warning,
                 stacklevel=2,
             )
 
@@ -83,7 +83,7 @@ class StringAgg(_DeprecatedOrdering, _StringAgg):
         warnings.warn(
             "The PostgreSQL specific StringAgg function is deprecated. Use "
             "django.db.models.aggregate.StringAgg instead.",
-            category=RemovedInDjango70Warning,
+            category=RemovedInDjango71Warning,
             stacklevel=2,
         )
 

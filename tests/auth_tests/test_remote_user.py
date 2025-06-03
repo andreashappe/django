@@ -13,7 +13,7 @@ from django.test import (
     modify_settings,
     override_settings,
 )
-from django.utils.deprecation import RemovedInDjango61Warning
+from django.utils.deprecation import RemovedInDjango62Warning
 
 
 @override_settings(ROOT_URLCONF="auth_tests.urls")
@@ -490,13 +490,13 @@ class PersistentRemoteUserTest(RemoteUserTest):
         self.assertEqual(response.context["user"].username, "knownuser")
 
 
-# RemovedInDjango61Warning.
+# RemovedInDjango62Warning.
 class CustomProcessRequestMiddlewareSyncOnly(RemoteUserMiddleware):
     def process_request(self, request):
         raise NotImplementedError("process_request has not been implemented.")
 
 
-# RemovedInDjango61Warning.
+# RemovedInDjango62Warning.
 class CustomProcessRequestMiddleware(RemoteUserMiddleware):
     def process_request(self, request):
         raise NotImplementedError("process_request has not been implemented.")
@@ -505,7 +505,7 @@ class CustomProcessRequestMiddleware(RemoteUserMiddleware):
         raise NotImplementedError("aprocess_request has not been implemented.")
 
 
-# RemovedInDjango61Warning.
+# RemovedInDjango62Warning.
 @override_settings(ROOT_URLCONF="auth_tests.urls")
 class CustomProcessRequestMiddlewareTest(TestCase):
     @modify_settings(
@@ -522,7 +522,7 @@ class CustomProcessRequestMiddlewareTest(TestCase):
         )
         error_msg = "process_request has not been implemented."
         with (
-            self.assertWarnsMessage(RemovedInDjango61Warning, deprecation_msg),
+            self.assertWarnsMessage(RemovedInDjango62Warning, deprecation_msg),
             self.assertRaisesMessage(NotImplementedError, error_msg),
         ):
             await self.async_client.get("/remote_user/")
