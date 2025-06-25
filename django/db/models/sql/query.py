@@ -2502,8 +2502,6 @@ class Query(BaseExpression):
 
         selected = {}
         if fields:
-            for field in fields:
-                self.check_alias(field)
             field_names = []
             extra_names = []
             annotation_names = []
