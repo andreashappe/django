@@ -459,17 +459,8 @@ class Urlizer:
                 escaped = html.unescape(potential_entity)
                 if escaped == potential_entity or escaped.endswith(";"):
                     rstripped = middle.rstrip(self.trailing_punctuation_chars)
-                    trail_start = len(rstripped)
-                    amount_trailing_semicolons = len(middle) - len(middle.rstrip(";"))
-                    if amp > -1 and amount_trailing_semicolons > 1:
-                        # Leave up to most recent semicolon as might be an entity.
-                        recent_semicolon = middle[trail_start:].index(";")
-                        middle_semicolon_index = recent_semicolon + trail_start + 1
-                        trail = middle[middle_semicolon_index:] + trail
-                        middle = rstripped + middle[trail_start:middle_semicolon_index]
-                    else:
-                        trail = middle[trail_start:] + trail
-                        middle = rstripped
+                    trail = middle[len(rstripped):] + trail
+                    middle = rstripped
                     trimmed_something = True
 
         return lead, middle, trail
