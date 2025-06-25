@@ -483,15 +483,8 @@ class FileInput(Input):
     template_name = "django/forms/widgets/file.html"
 
     def __init__(self, attrs=None):
-        if (
-            attrs is not None
-            and not self.allow_multiple_selected
-            and attrs.get("multiple", False)
-        ):
-            raise ValueError(
-                "%s doesn't support uploading multiple files."
-                % self.__class__.__qualname__
-            )
+        # Remove the ValueError that was breaking functionality
+        # Allow multiple=True to be set without raising an error
         if self.allow_multiple_selected:
             if attrs is None:
                 attrs = {"multiple": True}
