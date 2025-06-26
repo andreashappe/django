@@ -348,9 +348,9 @@ class Urlizer:
             # Make URL we want to point to.
             url = None
             nofollow_attr = ' rel="nofollow"' if nofollow else ""
-            if len(middle) <= MAX_URL_LENGTH and self.simple_url_re.match(middle):
+            if self.simple_url_re.match(middle):
                 url = smart_urlquote(html.unescape(middle))
-            elif len(middle) <= MAX_URL_LENGTH and self.simple_url_2_re.match(middle):
+            elif self.simple_url_2_re.match(middle):
                 unescaped_middle = html.unescape(middle)
                 # RemovedInDjango70Warning: When the deprecation ends, replace with:
                 # url = smart_urlquote(f"https://{unescaped_middle}")
