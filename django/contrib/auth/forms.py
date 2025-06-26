@@ -410,12 +410,7 @@ class PasswordResetForm(forms.Form):
             html_email = loader.render_to_string(html_email_template_name, context)
             email_message.attach_alternative(html_email, "text/html")
 
-        try:
-            email_message.send()
-        except Exception:
-            logger.exception(
-                "Failed to send password reset email to %s", context["user"].pk
-            )
+        email_message.send()
 
     def get_users(self, email):
         """Given an email, return matching user(s) who should receive a reset.
