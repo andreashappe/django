@@ -79,6 +79,7 @@ class CommandParser(ArgumentParser):
             kwargs["parser_class"] = partial(
                 parser_class,
                 called_from_command_line=self.called_from_command_line,
+                missing_args_message=self.missing_args_message,
             )
         return super().add_subparsers(**kwargs)
 
