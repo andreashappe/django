@@ -409,14 +409,6 @@ class Urlizer:
     def wrapping_punctuation_openings(self):
         return "".join(dict(self.wrapping_punctuation).keys())
 
-    @cached_property
-    def trailing_punctuation_chars_no_semicolon(self):
-        return self.trailing_punctuation_chars.replace(";", "")
-
-    @cached_property
-    def trailing_punctuation_chars_has_semicolon(self):
-        return ";" in self.trailing_punctuation_chars
-
     def trim_punctuation(self, word):
         """
         Trim trailing and wrapping punctuation from `word`. Return the items of
@@ -443,34 +435,40 @@ class Urlizer:
                         trimmed_something = True
                         counts[closing] -= strip
 
-            amp = middle.rfind("&")
-            if amp == -1:
-                rstripped = middle.rstrip(self.trailing_punctuation_chars)
-            else:
-                rstripped = middle.rstrip(self.trailing_punctuation_chars_no_semicolon)
+            # Strip trailing punctuation, but be careful with semicolons in HTML entities.
+            # First, strip non-semicolon punctuation
+            rstripped = middle.rstrip(self.trailing_punctuation_chars.replace(";", ""))
             if rstripped != middle:
                 trail = middle[len(rstripped) :] + trail
                 middle = rstripped
                 trimmed_something = True
-
-            if self.trailing_punctuation_chars_has_semicolon and middle.endswith(";"):
-                # Only strip if not part of an HTML entity.
-                potential_entity = middle[amp:]
-                escaped = html.unescape(potential_entity)
-                if escaped == potential_entity or escaped.endswith(";"):
-                    rstripped = middle.rstrip(self.trailing_punctuation_chars)
-                    trail_start = len(rstripped)
-                    amount_trailing_semicolons = len(middle) - len(middle.rstrip(";"))
-                    if amp > -1 and amount_trailing_semicolons > 1:
-                        # Leave up to most recent semicolon as might be an entity.
-                        recent_semicolon = middle[trail_start:].index(";")
-                        middle_semicolon_index = recent_semicolon + trail_start + 1
-                        trail = middle[middle_semicolon_index:] + trail
-                        middle = rstripped + middle[trail_start:middle_semicolon_index]
-                    else:
-                        trail = middle[trail_start:] + trail
-                        middle = rstripped
+            
+            # Now handle semicolons - strip them unless they're part of an HTML entity
+            while middle.endswith(";"):
+                # Look for an ampersand that might start an HTML entity
+                amp_pos = middle.rfind("&")
+                if amp_pos == -1:
+                    # No ampersand, so semicolon is just punctuation
+                    middle = middle[:-1]
+                    trail = ";" + trail
                     trimmed_something = True
+                else:
+                    # Check if the string ends with a valid HTML entity
+                    potential_entity = middle[amp_pos:]
+                    # Only check if this exact entity (from & to ;) is valid
+                    # by seeing if unescaping just this part changes it
+                    unescaped_entity = html.unescape(potential_entity)
+                    # Also check that the unescaped version doesn't end with semicolon
+                    # (which would indicate there are extra semicolons)
+                    if (unescaped_entity != potential_entity and 
+                        not unescaped_entity.endswith(";")):
+                        # It's a valid HTML entity at the end, keep the semicolon
+                        break
+                    else:
+                        # Not a valid HTML entity at the end, strip the semicolon
+                        middle = middle[:-1]
+                        trail = ";" + trail
+                        trimmed_something = True
 
         return lead, middle, trail
 
