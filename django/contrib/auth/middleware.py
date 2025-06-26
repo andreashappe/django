@@ -200,7 +200,7 @@ class RemoteUserMiddleware:
                 " before the RemoteUserMiddleware class."
             )
         try:
-            username = request.META["HTTP_" + self.header]
+            username = request.META[self.header]
         except KeyError:
             # If specified header doesn't exist then remove any existing
             # authenticated remote-user, or return (leaving request.user set to
