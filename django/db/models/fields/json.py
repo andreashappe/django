@@ -181,25 +181,27 @@ class ContainedBy(FieldGetDbPrepValueMixin, PostgresOperatorLookup):
 class HasKeyLookup(PostgresOperatorLookup):
     logical_operator = None
 
-    def compile_json_path_final_key(self, connection, key_transform):
+    def compile_json_path_final_key(self, final_key):
         # Compile the final key without interpreting ints as array elements.
-        return ".%s" % json.dumps(key_transform)
+        return ".%s" % json.dumps(final_key)
 
-    def _as_sql_parts(self, compiler, connection):
+    def as_sql(self, compiler, connection, template=None):
         # Process JSON path from the left-hand side.
         if isinstance(self.lhs, KeyTransform):
-            lhs_sql, lhs_params, lhs_key_transforms = self.lhs.preprocess_lhs(
+            lhs, lhs_params, lhs_key_transforms = self.lhs.preprocess_lhs(
                 compiler, connection
             )
             lhs_json_path = connection.ops.compile_json_path(lhs_key_transforms)
         else:
-            lhs_sql, lhs_params = self.process_lhs(compiler, connection)
+            lhs, lhs_params = self.process_lhs(compiler, connection)
             lhs_json_path = "$"
+        sql = template % (lhs, "%s")
         # Process JSON path from the right-hand side.
-        rhs = self.rhs
-        if not isinstance(rhs, (list, tuple)):
-            rhs = [rhs]
-        for key in rhs:
+        rhs, rhs_params = self.process_rhs(compiler, connection)
+        if not isinstance(rhs_params, (list, tuple)):
+            rhs_params = [rhs_params]
+        json_path_params = []
+        for key in rhs_params:
             if isinstance(key, KeyTransform):
                 *_, rhs_key_transforms = key.preprocess_lhs(compiler, connection)
             else:
@@ -208,24 +210,12 @@ class HasKeyLookup(PostgresOperatorLookup):
             rhs_json_path = connection.ops.compile_json_path(
                 rhs_key_transforms, include_root=False
             )
-            rhs_json_path += self.compile_json_path_final_key(connection, final_key)
-            yield lhs_sql, lhs_params, lhs_json_path + rhs_json_path
-
-    def _combine_sql_parts(self, parts):
+            rhs_json_path += self.compile_json_path_final_key(final_key)
+            json_path_params.append(lhs_json_path + rhs_json_path)
         # Add condition for each key.
         if self.logical_operator:
-            return "(%s)" % self.logical_operator.join(parts)
-        return "".join(parts)
-
-    def as_sql(self, compiler, connection, template=None):
-        sql_parts = []
-        params = []
-        for lhs_sql, lhs_params, rhs_json_path in self._as_sql_parts(
-            compiler, connection
-        ):
-            sql_parts.append(template % (lhs_sql, "%s"))
-            params.extend([*lhs_params, rhs_json_path])
-        return self._combine_sql_parts(sql_parts), tuple(params)
+            sql = "(%s)" % self.logical_operator.join([sql] * len(json_path_params))
+        return sql, tuple(lhs_params) + tuple(json_path_params)
 
     def as_mysql(self, compiler, connection):
         return self.as_sql(
@@ -233,21 +223,9 @@ class HasKeyLookup(PostgresOperatorLookup):
         )
 
     def as_oracle(self, compiler, connection):
-        # Use a custom delimiter to prevent the JSON path from escaping the SQL
-        # literal. See comment in KeyTransform.
-        template = "JSON_EXISTS(%s, q'\uffff%s\uffff')"
-        sql_parts = []
-        params = []
-        for lhs_sql, lhs_params, rhs_json_path in self._as_sql_parts(
-            compiler, connection
-        ):
-            # Add right-hand-side directly into SQL because it cannot be passed
-            # as bind variables to JSON_EXISTS. It might result in invalid
-            # queries but it is assumed that it cannot be evaded because the
-            # path is JSON serialized.
-            sql_parts.append(template % (lhs_sql, rhs_json_path))
-            params.extend(lhs_params)
-        return self._combine_sql_parts(sql_parts), tuple(params)
+        return self.as_sql(
+            compiler, connection, template="JSON_EXISTS(%s, %s)"
+        )
 
     def as_postgresql(self, compiler, connection):
         if isinstance(self.rhs, KeyTransform):
